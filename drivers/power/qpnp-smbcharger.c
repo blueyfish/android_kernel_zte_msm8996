@@ -9324,70 +9324,75 @@ static void update_heartbeat(struct work_struct *work)
 
 	if(smbchg_debug_mask == 0xFF)   //ZTE_PM used smbchg_debug_mask for log debug.
 		dump_regs(chip);
-		temp = temp/10;
-		voltage		=	get_prop_batt_voltage_now(chip)/1000;
-		cap			=	get_prop_batt_capacity(chip);
-		status		=	get_prop_batt_status(chip);
-		charge_type	=	get_prop_charge_type(chip);
-		present		=	get_prop_batt_present(chip);
-		chg_current	=	get_prop_batt_current_now(chip);
-		usbin_v		=	zte_get_usbin_voltage_now(chip);
-		usb_current	=	smbchg_get_iusb(chip);
-		health = get_prop_batt_health(chip);
-		printk_counter++;
 
-		if ((usb_present) && (chg_current > 0) && (charge_type_oem == CHARGER_TYPE_HVDCP)
-			&& (chip->apsd_rerun_flag == APSD_RERUN_FLAG_DEFAULT) && (!socinfo_get_charger_flag())
-			&& (chip->chg_complete_sft_enable == 0) && (!batt_protect_chg_policy)) {
-			if (((status == POWER_SUPPLY_STATUS_CHARGING)
-				&& (charge_type == POWER_SUPPLY_CHARGE_TYPE_FAST))
-				|| ((status == POWER_SUPPLY_STATUS_DISCHARGING)
-				&& (charge_type == POWER_SUPPLY_CHARGE_TYPE_NONE)
-				&& (health == POWER_SUPPLY_HEALTH_GOOD))) {
-				pr_info("***temp=%d, vol=%d, cap=%d, status=%d, chg_state=%d\n",
-						temp, voltage, cap, status, charge_type);
-				pr_info("current=%d, present=%d, usb_present=%d\n",
-					chg_current, present, usb_present);
-				pr_info("***present=%d, usb_present=%d, USBIN_V=%d, usb_current=%d, charge_type_oem=%d\n",
-						present, usb_present, usbin_v, usb_current, charge_type_oem);
-				dump_regs(chip);
-				chip->apsd_rerun_flag = APSD_RERUN_FLAG_PREPARE;
-				charge_type_oem = CHARGER_TYPE_UNKNOWN;
-				wake_lock(&chip->apsd_rerun_wake_lock);
-				schedule_delayed_work(&chip->apsd_rerun_work,
-					round_jiffies_relative(msecs_to_jiffies(10)));
-			}
-		}
-		/*if heatbeat_ms is bigger than 500ms,must output the logs directly.*/
-		if ((heartbeat_ms>=500) || (abs(temp-old_temp) >= 1) || (old_cap != cap) || (old_status != status)
-		|| (old_present != present) || (old_usb_present != usb_present )||(printk_counter>=5))
+	temp = temp/10;
+	voltage		=	get_prop_batt_voltage_now(chip)/1000;
+	cap			=	get_prop_batt_capacity(chip);
+	status		=	get_prop_batt_status(chip);
+	charge_type	=	get_prop_charge_type(chip);
+	present		=	get_prop_batt_present(chip);
+	chg_current	=	get_prop_batt_current_now(chip);
+	usbin_v		=	zte_get_usbin_voltage_now(chip);
+	usb_current	=	smbchg_get_iusb(chip);
+	health = get_prop_batt_health(chip);
+	printk_counter++;
+
+	if ((usb_present) && (chg_current > 0) && (charge_type_oem == CHARGER_TYPE_HVDCP)
+		&& (chip->apsd_rerun_flag == APSD_RERUN_FLAG_DEFAULT) && (!socinfo_get_charger_flag())
+		&& (chip->chg_complete_sft_enable == 0) && (!batt_protect_chg_policy))
+	{
+		if (((status == POWER_SUPPLY_STATUS_CHARGING)
+			&& (charge_type == POWER_SUPPLY_CHARGE_TYPE_FAST))
+			|| ((status == POWER_SUPPLY_STATUS_DISCHARGING)
+			&& (charge_type == POWER_SUPPLY_CHARGE_TYPE_NONE)
+			&& (health == POWER_SUPPLY_HEALTH_GOOD)))
 		{
-			pr_info("***temp=%d,vol=%d,cap=%d,status=%d,chg_state=%d,current=%d,present=%d,usb_present=%d\n",
-				temp,voltage,cap,status,charge_type,chg_current,present,usb_present);
-			pr_info("***present=%d,usb_present=%d,USBIN_V=%d,usb_current=%d,charge_type_oem=%d, health=%d\n",
-				present, usb_present, usbin_v, usb_current, charge_type_oem, health);
-
-			old_temp = temp;
-			old_cap = cap;
-			old_status = status;
-			old_present = present;
-			old_usb_present = usb_present;
-			printk_counter=0;
-			/* disable this type of broadcast, it is not must, and cost much */
-			/* power_supply_changed(&chip->batt_psy); */
+			pr_info("***temp=%d, vol=%d, cap=%d, status=%d, chg_state=%d\n",
+					temp, voltage, cap, status, charge_type);
+			pr_info("current=%d, present=%d, usb_present=%d\n",
+				chg_current, present, usb_present);
+			pr_info("***present=%d, usb_present=%d, USBIN_V=%d, usb_current=%d, charge_type_oem=%d\n",
+					present, usb_present, usbin_v, usb_current, charge_type_oem);
+			dump_regs(chip);
+			chip->apsd_rerun_flag = APSD_RERUN_FLAG_PREPARE;
+			charge_type_oem = CHARGER_TYPE_UNKNOWN;
+			wake_lock(&chip->apsd_rerun_wake_lock);
+			schedule_delayed_work(&chip->apsd_rerun_work,
+				round_jiffies_relative(msecs_to_jiffies(10)));
 		}
+	}
+
+	/*if heatbeat_ms is bigger than 500ms,must output the logs directly.*/
+	if ((heartbeat_ms>=500) || (abs(temp-old_temp) >= 1) || (old_cap != cap) || (old_status != status)
+		|| (old_present != present) || (old_usb_present != usb_present )||(printk_counter>=5))
+	{
+		pr_info("***temp=%d,vol=%d,cap=%d,status=%d,chg_state=%d,current=%d,present=%d,usb_present=%d\n",
+			temp,voltage,cap,status,charge_type,chg_current,present,usb_present);
+		pr_info("***present=%d,usb_present=%d,USBIN_V=%d,usb_current=%d,charge_type_oem=%d, health=%d\n",
+			present, usb_present, usbin_v, usb_current, charge_type_oem, health);
+
+		old_temp = temp;
+		old_cap = cap;
+		old_status = status;
+		old_present = present;
+		old_usb_present = usb_present;
+		printk_counter=0;
+		/* disable this type of broadcast, it is not must, and cost much */
+		/* power_supply_changed(&chip->batt_psy); */
+	}
+
 	/*report zero, but the uplayer is not shutdown in 60s,kernel should power off directly. */
 	if (report_zero) {
-              if (report_zero_jiffies == 0) {
+		if (report_zero_jiffies == 0) {
 			report_zero_jiffies = jiffies;
 			pr_info("start check at %ld\n", report_zero_jiffies);
 		} else {
-		unsigned long delta = jiffies - report_zero_jiffies;
-		pr_info("offcharging_flag=%d %ld=%ld-%ld\n",
-			socinfo_get_charger_flag(), delta, jiffies, report_zero_jiffies);
-		if ((socinfo_get_charger_flag() && time_after(jiffies,report_zero_jiffies+OFFCHG_FORCE_POWEROFF_DELTA )) ||
-			(!socinfo_get_charger_flag() && time_after(jiffies,report_zero_jiffies+NORMAL_FORCE_POWEROFF_DELTA )) )
-			kernel_power_off();
+			unsigned long delta = jiffies - report_zero_jiffies;
+			pr_info("offcharging_flag=%d %ld=%ld-%ld\n",
+				socinfo_get_charger_flag(), delta, jiffies, report_zero_jiffies);
+			if ((socinfo_get_charger_flag() && time_after(jiffies,report_zero_jiffies+OFFCHG_FORCE_POWEROFF_DELTA )) ||
+				(!socinfo_get_charger_flag() && time_after(jiffies,report_zero_jiffies+NORMAL_FORCE_POWEROFF_DELTA )) )
+				kernel_power_off();
 		}
 	}else
 		report_zero_jiffies = 0;
